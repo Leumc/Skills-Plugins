@@ -1,92 +1,60 @@
-# AI Agent Skills & Plugins（多 Agent 共用仓库）
+# AI Agent Skills & Plugins
 
-本仓库由**多个不同平台的 AI Agent 共同使用与维护**，每个 Agent 拥有自己独立的顶层目录。
+一个由**多个平台 AI Agent 共同维护**的能力仓库，收集整理各平台的 **Skill（技能）** 与 **Plugin（插件）**。
 
-## 📁 仓库目录结构
+每个平台拥有独立的顶层目录，内容互不干扰；所有更新通过 Pull Request 审核合并。
+
+## 📦 收录内容
+
+### Operit
+
+<table>
+<tr><td width="30%"><b>virtual_screen_auto</b></td><td>
+
+在 Operit **虚拟屏**上安全操作手机 App（微信 / 美团 / 拼多多等）的自动化 Skill。
+
+- **点得准**：截图 + OCR + 画框校验，精确定位界面元素（解决普通坐标估算点歪的问题）
+- **不重复找**：场景坐标数据库（SQLite），命中即秒点，未命中自动截图定位并补录
+- **安全接管**：支付 / 密码等敏感环节 AI 停手，通知用户接管
+- **结果直达**：查询类操作完成后，同时弹 Toast + 发系统通知
+
+路径：`operit/skills/virtual_screen_auto/`
+</td></tr>
+</table>
+
+### Codex
+
+_暂无收录。_
+
+### DeepSeek Harness
+
+_暂无收录。_
+
+### Hermes
+
+_暂无收录。_
+
+## 📁 目录结构
 
 ```
 .
-├── README.md              # 本文件（结构规范 + 协作流程）
-├── .gitignore
-│
+├── README.md              # 本文件
+├── specification.md       # 目录结构规范 + 协作更新流程
 ├── operit/                # Operit 平台
 │   ├── skills/
-│   │   └── <skill_name>/
-│   │       ├── SKILL.md           # 必须：Skill 主文件（含 frontmatter）
-│   │       ├── scripts/           # 可选：附带脚本
-│   │       └── data/              # 本地数据目录（.gitignore 已排除，不提交）
 │   └── plugins/
-│       └── <plugin_name>/
-│
 ├── codex/                 # Codex 平台
-│   ├── skills/
-│   └── plugins/
-│
 ├── deepseek_harness/      # DeepSeek Harness
-│   ├── skills/
-│   └── plugins/
-│
 └── hermes/                # Hermes
-    ├── skills/
-    └── plugins/
 ```
 
-### 顶层目录一览
+各平台目录下的具体组织方式（`skills/<name>/SKILL.md`、`plugins/...`）与命名规则，见 [specification.md](specification.md)。
 
-| 目录 | 归属平台 | 说明 |
-|---|---|---|
-| `operit/` | Operit | 虚拟屏自动化等 Skill |
-| `codex/` | Codex | Codex 平台内容 |
-| `deepseek_harness/` | DeepSeek Harness | Harness 平台内容 |
-| `hermes/` | Hermes | Hermes 平台内容 |
+## 🤝 如何贡献 / 更新
 
-## 📝 每个 Agent 如何建立自己的部分
+本仓库**禁止直接提交到主分支**，所有改动需走分支 + **PR（Pull Request）** 流程。
 
-1. **只在属于你的顶层目录内工作**，不要改动其他 Agent 的目录。
-2. 在你的顶层目录下按需创建：
-   ```
-   <你的平台>/
-     skills/<skill_name>/SKILL.md
-     skills/<skill_name>/scripts/...   （可选）
-     plugins/<plugin_name>/...          （可选）
-   ```
-3. **Skill 命名**：用小写字母 + 下划线（如 `virtual_screen_auto`），避免与其他 Skill 重名。
-4. **不提交本地数据**：数据库、缓存、截图、密钥等一律不入库
-   （根 `.gitignore` 已排除 `*.db`、`*_backup.json`、`*.png/jpg/log`、`__pycache__` 等）。
-5. 若需要新的顶层平台目录，请新建一个 `<platform>/` 并在此 README 的表格中补充说明。
-
-## 🤝 更新流程（重要：直接提交会被禁用）
-
-> ⚠️ **本仓库禁止直接 push 到主分支。** 所有更新必须走 **PR（Pull Request）** 流程。
-
-标准步骤：
-
-```bash
-# 1) 拉取最新（务必先同步，避免冲突）
-git checkout main
-git pull origin main
-
-# 2) 新建分支（分支名自取，建议带平台前缀）
-git checkout -b <platform>/<change-desc>
-#   例：git checkout -b operit/add-virtual-screen-auto
-
-# 3) 在你的目录内修改 / 新增内容
-git add <你的目录>
-git commit -m "<platform>: <简述改动>"
-
-# 4) 推送到远程分支
-git push origin <platform>/<change-desc>
-
-# 5) 在 GitHub 上创建 Pull Request
-#    - base: main
-#    - compare: 你刚推的分支
-#    - 填写改动说明，等待审核合并
-```
-
-要点：
-- ✅ 先 **pull** 再改； ✅ 走 **分支 + PR**； ❌ 不要直接提交到 `main`。
-- ✅ 一次 PR 只做一件相关的事，便于审核。
-- ✅ 提交前确认没有把 `data/`、`*.db`、密钥等本地文件加入。
+完整的目录规范与更新步骤（拉取 → 建分支 → 修改 → 提交 PR）请阅读 **[specification.md](specification.md)**。
 
 ## 📄 License
 
