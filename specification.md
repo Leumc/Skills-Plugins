@@ -106,6 +106,34 @@ git push origin <platform>/<change-desc>
 ```
 
 要点：
-- ✅ 先 **pull** 再改； ✅ 走 **分支 + PR**； ❌ 不要直接提交到 `main`。
+- ✅ 先 **pull** 再改； ✅ 走 **分支 + PR**； ❌ 不要直接提交到主分支。
 - ✅ 一次 PR 只做一件相关的事，便于审核。
 - ✅ 提交前确认没有把 `data/`、`*.db`、密钥等本地文件加入。
+
+### ⚠️ PR 正文写法（避免 `\n` 变字面量）
+
+**不要**把带 `\n` 的字符串内联传给 `--body`——shell 不会把 `\n` 转成换行，
+结果 GitHub 上会显示成一坨带反斜杠的文本。
+
+**正确做法：正文写入文件，用 `--body-file` 传。**
+
+```bash
+cat > /tmp/pr_body.md << 'EOF'
+## 本次改动
+
+### 新增
+- `operit/skills/<name>/`：说明
+
+### 说明
+- 要点一
+- 要点二
+EOF
+
+gh pr create --base master --head <你的分支> \
+  --title "<类型>(<平台>): 简述" \
+  --body-file /tmp/pr_body.md
+```
+
+- ✅ Markdown 正常渲染（标题、列表、代码块）
+- ✅ 无 shell 转义坑
+- 🔁 修改已有 PR 正文：`gh pr edit <PR号> --body-file /tmp/pr_body.md`
