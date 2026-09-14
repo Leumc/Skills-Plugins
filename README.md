@@ -4,9 +4,7 @@
 
 ## 📦 Skills
 
-| Skill | 平台 | 说明 |
-|---|---|---|
-| [virtual_screen_auto](operit/descriptions/virtual_screen_auto.md) | Operit | 在虚拟屏上安全操作手机 App 的自动化技能 |
+- **[virtual_screen_auto](operit/descriptions/virtual_screen_auto.md)**（Operit）— 在虚拟屏上安全操作手机 App 的自动化技能
 
 ## 🤝 贡献
 

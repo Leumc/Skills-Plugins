@@ -69,8 +69,9 @@
 2. 描述文件可包含：功能介绍、核心能力、适用场景、前置条件、目录结构、路径等。
 3. **README 中只放一行索引**，链接指向描述文件，例如：
    ```markdown
-   | [virtual_screen_auto](operit/descriptions/virtual_screen_auto.md) | Operit | 一句话说明 |
+   - **[virtual_screen_auto](operit/descriptions/virtual_screen_auto.md)**（Operit）— 一句话说明
    ```
+   （用列表，不用表格，避免被顶高）
 4. 新增 / 修改 Skill 时：
    - 改 `<平台>/skills/<skill_name>/`（实现）
    - 同步改 `<平台>/descriptions/<skill_name>.md`（描述）
