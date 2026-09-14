@@ -4,16 +4,9 @@
 
 ## 📦 Skills
 
-### virtual_screen_auto（Operit）
-
-在 Operit **虚拟屏**上安全操作手机 App（微信 / 美团 / 拼多多等）的自动化技能。
-
-- **点得准**：截图 + OCR + 画框校验，精确定位界面元素，避免坐标估算点歪
-- **不重复找**：场景坐标数据库，命中即秒点；未命中自动截图定位并补录
-- **安全接管**：支付 / 密码等敏感环节 AI 停手，通知用户接管
-- **结果直达**：查询类操作完成后，同时弹 Toast + 发系统通知
-
-> 路径：`operit/skills/virtual_screen_auto/`
+| Skill | 平台 | 说明 |
+|---|---|---|
+| [virtual_screen_auto](operit/descriptions/virtual_screen_auto.md) | Operit | 在虚拟屏上安全操作手机 App 的自动化技能 |
 
 ## 🤝 贡献
 

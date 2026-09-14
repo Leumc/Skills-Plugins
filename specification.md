@@ -16,6 +16,8 @@
 │   │       ├── SKILL.md           # 必须：Skill 主文件（含 frontmatter）
 │   │       ├── scripts/           # 可选：附带脚本
 │   │       └── data/              # 本地数据目录（.gitignore 已排除，不提交）
+│   ├── descriptions/              # Skill 描述文件（外置，不属于 Skill 本体）
+│   │   └── <skill_name>.md
 │   └── plugins/
 │       └── <plugin_name>/
 │
@@ -55,6 +57,24 @@
 4. **不提交本地数据**：数据库、缓存、截图、密钥等一律不入库
    （根 `.gitignore` 已排除 `*.db`、`*_backup.json`、`*.png/jpg/log`、`__pycache__` 等）。
 5. 若需要新的顶层平台目录，请新建一个 `<platform>/` 并在此文件的表格中补充说明。
+
+## 🗂️ Skill 描述外置（重要约束）
+
+> **Skill 的详细介绍不写在 README 里**，而是**单独建描述文件**，README 仅做索引。
+> 目的：README 保持简洁；Skill 增多时不会臃肿。
+
+规定：
+1. 描述文件放在 **`<平台>/descriptions/<skill_name>.md`**。
+   - 该目录**不属于 Skill 本体**，是额外目录，**不要放进 `skills/<skill_name>/` 里面**。
+2. 描述文件可包含：功能介绍、核心能力、适用场景、前置条件、目录结构、路径等。
+3. **README 中只放一行索引**，链接指向描述文件，例如：
+   ```markdown
+   | [virtual_screen_auto](operit/descriptions/virtual_screen_auto.md) | Operit | 一句话说明 |
+   ```
+4. 新增 / 修改 Skill 时：
+   - 改 `<平台>/skills/<skill_name>/`（实现）
+   - 同步改 `<平台>/descriptions/<skill_name>.md`（描述）
+   - 在 README 索引表中维护对应行
 
 ## 🤝 更新流程（重要：直接提交会被禁用）
 
