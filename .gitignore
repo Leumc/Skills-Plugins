@@ -1,0 +1,30 @@
+# ===== 本地数据（不上传）=====
+# 场景坐标数据库：含本机个人场景/坐标，不应公开
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# 本地备份文件
+*_backup.json
+
+# ===== 临时 / 系统文件 =====
+*.png
+*.jpg
+*.jpeg
+*.log
+.DS_Store
+Thumbs.db
+
+# ===== Python =====
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# ===== 编辑器 =====
+.vscode/
+.idea/
+*.swp
+*~
