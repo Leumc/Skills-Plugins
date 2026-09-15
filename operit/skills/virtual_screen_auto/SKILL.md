@@ -1,7 +1,7 @@
 ---
 name: virtual_screen_auto
-description: 操作手机App的唯一标准方案。当用户要求打开某App、点击界面、查物流/课表/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须使用本Skill。核心铁律：① 严禁让子代理自己猜坐标去点，坐标必须由主Agent先"截图+OCR+画框校验"得出；② 命中场景数据库才可直接点，未命中必须先截图定位再补录；③ 场景数据库可随时查（query-screen按界面查元素 / query-action按操作查链路），每进入新界面都应先查库、命中即用坐标省掉截图；④ 异常先怀疑环境（跨App页面跑到主屏用move-stack搬回、键盘在主屏用input keyevent 66提交、滑动无效是起点落在浮层）。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。
-tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, pinduoduo, preferred]
+description: 操作手机App的唯一标准方案（通用，不绑定特定App）。当用户要求打开某App、点击界面、查信息/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须使用本Skill。核心铁律：① 严禁让子代理自己猜坐标去点，坐标必须由主Agent先"截图+OCR+画框校验"得出；② 命中场景数据库才可直接点，未命中必须先截图定位再补录；③ 场景数据库可随时查（query-screen按界面查元素 / query-action按操作查链路），每进入新界面都应先查库、命中即用坐标省掉截图；④ 异常先怀疑环境（跨App页面跑到主屏用move-stack搬回、键盘在主屏用input keyevent 66提交、滑动无效是起点落在浮层）。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库(使用者自建)、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。
+tags: [android, ui-automation, virtual-display, app-operation, preferred]
 ---
 
 # 虚拟屏 UI 自动化操作 Skill
@@ -62,19 +62,27 @@ tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, 
 核心价值：**点得准**（截图+OCR+画框校验）、**不重复找**（场景缓存）、**安全接管**（支付环节通知用户）。
 
 ## 一、适用场景
-- 需要 AI 帮助操作 App（微信/美团/企业应用等），且不想占用用户真实屏幕。
+
+> 🌍 **本 Skill 是通用工具，不绑定任何特定 App / 学校 / 个人场景。**
+> - 适用于**任意**手机 App 的界面自动化操作。
+> - 场景数据库（`scenes.db`）**由使用者自己在使用过程中积累**，本 Skill 不附带任何预置数据。
+> - 文档中的"某界面""某按钮"均为**占位示例**，实际以你自己的 App 界面为准。
+> - 首次使用某 App 时数据库是空的，按标准流程走「查库 → 未命中 → 截图定位 → 补录」即可，**越用越快**。
+
+- 需要 AI 帮助操作手机 App（如社交 / 购物 / 工具类应用等），且不想占用用户真实屏幕。
 - 需要点击界面元素，但普通坐标估算容易点歪（密集列表）。
 - 涉及下单/支付等敏感流程，需要用户在关键步骤接管。
 
 ## 二、前置条件
 - 已授予 Shizuku 权限。
 - 已启用「实验性虚拟显示」，且「UI 控制器」功能模型支持**图片理解（多模态/视觉）**。
-- 环境：iQOO Z10（示例）；主屏 1260x2800，**虚拟屏 1264x2704**（两者不同！）。
-- 工具：`Automatic_ui_subagent` 包、`super_admin` 包；tesseract（已装，chi_sim）；脚本 `/data/local/tmp/draw_by_ratio.py`。
+- 环境：支持虚拟屏的 Android 设备（**主屏与虚拟屏分辨率可能不同**，务必先实测确认，见第三节）。
+- 工具：`Automatic_ui_subagent` 包、`super_admin` 包；tesseract（需含 `chi_sim` 中文包）；脚本 `/data/local/tmp/draw_by_ratio.py`。
 
 ## 三、坐标体系（关键）
 - 子代理用 **999×999 归一化坐标**（0~1000 = 0~100%），**禁止传真实像素**。
-- 比例换算：`x_ratio = round(x_px / 1264 * 1000)`，`y_ratio = round(y_px / 2704 * 1000)`。
+- 比例换算：`x_ratio = round(x_px / 屏宽 * 1000)`，`y_ratio = round(y_px / 屏高 * 1000)`
+  （**屏宽/屏高 = 虚拟屏实际分辨率，先实测确认**，不是主屏的）。
 - 滑动（子代理内部坐标）：向下 `swipe(start=[500,800], end=[500,300])`；向上 `swipe([500,300]→[500,700])`。
 
 ## 四、标准工作流（V2：先查场景，后记录）
@@ -157,7 +165,7 @@ python3 scene_db.py list
    VD=$(dumpsys SurfaceFlinger --display-id | grep 'Virtual display' | grep -oE '[0-9]{15,}')
    screencap -p -d "$VD" /sdcard/Download/scr.png
    ```
-   截图尺寸 = 虚拟屏 1264x2704，干净无悬浮窗。
+   截图尺寸 = 虚拟屏实际分辨率（**先实测**，如 `identify`/PIL 读取），干净无悬浮窗。
 2. OCR 定位目标文字像素：
    ```bash
    tesseract scr.png stdout -l chi_sim tsv | awk -F'\t' '$12!=""{print $7,$8,$9,$10,$12}'
@@ -278,8 +286,8 @@ cmd notification post -t "Operit · 查询结果" -S bigtext "query" "<结果>"
 4. **滑动惯性大**：滑一次→停下读屏→再决定；滑两次内容不变 = 到底。
 5. **虚拟屏勿多开**：同一 App 只能在一个虚拟屏；用完 `close_all_virtual_displays`。
 6. **截图黑屏**：页面跳转/弹窗瞬间可能截到黑屏（文件很小如 19KB），重新截图即可，不是防截屏。
-7. **App 混淆**：普通微信用 `com.tencent.mm`，企业微信用 `com.tencent.wework`；用底部导航条区分。
-8. **控件拿不到**：微信/企业微信屏蔽无障碍，`uiautomator dump` 为空；只能靠截图视觉识别。
+7. **App 同名混淆**：同一厂商可能有多个包名相近的 App（如普通版/企业版），启动时务必用**准确包名**定位。
+8. **控件拿不到**：部分 App 屏蔽无障碍，`uiautomator dump` 为空；此时只能靠截图视觉识别。
 9. **通知必须走辅助 App 优先**（见步骤 5.5）：先 `pm list packages | grep com.operit.assist` 判断，
    装了就用 `am broadcast -n com.operit.assist/com.operit.assist.notify.NotifyReceiver`（可横幅/图标/震动）；
    没装才降级 `cmd notification post`，**并且必须告知用户去 Release 安装**。
@@ -318,14 +326,14 @@ cmd notification post -t "Operit · 查询结果" -S bigtext "query" "<结果>"
 
 ### 11. 跨 App 跳转后"页面不见" → 可能被启动到主屏
 
-**现象**：在虚拟屏点"分享到微信"等跨 App 入口后，目标页（如微信选择联系人页）被启动到
+**现象**：在虚拟屏点"分享/跳转"等跨 App 入口后，目标页被启动到
 **主屏 display 0**，虚拟屏看不到 → 子代理会误报"没跳转 / 点击无效"。
 
 **排查**：
 ```bash
 dumpsys activity activities | grep -iE '<目标Activity关键字>'
-# 例：ActivityRecord{... com.tencent.mm/.ui.transmit.SelectConversationUI t9948 d0}
-#                                                    t9948=task id   d0=在主屏
+# 例：ActivityRecord{... <包名>/<Activity> t9948 d0}
+#                                          t9948=task id   d0=在主屏
 ```
 
 **搬回虚拟屏**（唯一可用的命令）：
@@ -377,7 +385,7 @@ cmd activity display move-stack <TASK_ID> <虚拟屏display号>
 
 ### 15. 子代理坐标偏差的根因 & 画框只能程序合成
 
-- **偏差根因**：子代理内部按 **9:16** 估屏幕（约 1080×1930），而虚拟屏实际是 **1264×2704（≈9:19.3）**，
+- **偏差根因**：子代理内部按 **9:16** 估算屏幕（约 1080×1930），而虚拟屏实际通常是**更长的比例**（如 9:19.3），
   宽高比不同 → 纵向**系统性偏移**，越靠下偏得越多（实测偏 100~250px）。
   → 所以**必须**用「截图 → OCR → 画框 → 换算 999 比例」得出的坐标，**绝不能用像素坐标或估算坐标**。
 - **子代理没有"画框"动作**：其动作集为 Tap/Swipe/Note/Call_API/Launch/Back/Home/Wait，
@@ -399,7 +407,7 @@ Activity：<页面/活动名>
 类型：<查询类 / 操作类>   ← 查询类完成后需弹 Toast
 控件：<点击目标名称> → 比例坐标 [x, y]
 上下文：<页面特征/前置条件>
-分辨率：虚拟屏 1264x2704
+分辨率：虚拟屏 <实际分辨率，实测填写>
 验证日期：<YYYY-MM-DD>
 ```
 
