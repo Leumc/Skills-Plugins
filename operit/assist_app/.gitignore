@@ -1,0 +1,27 @@
+# ===== Android 构建产物（不提交）=====
+/build/
+/app/build/
+.gradle/
+/captures/
+.externalNativeBuild/
+.cxx/
+local.properties
+
+# ===== IDE =====
+.idea/
+*.iml
+*.hprof
+.DS_Store
+
+# ===== 密钥 / 签名 =====
+*.keystore
+*.jks
+
+# ===== APK / AAB =====
+*.apk
+*.aab
+
+# ===== 日志 =====
+*.log
+!app/src/main/res/mipmap-*/
+!app/src/main/res/mipmap-*/*.png
