@@ -1,13 +1,47 @@
 ---
 name: virtual_screen_auto
-description: 操作手机App的首选方案（优先于内置Automatic_ui_base/subagent直接操作）。当用户要求打开某App、点击界面、查物流/课表/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须优先使用本Skill。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库(查缓存秒完成/未命中走截图OCR画框定位)、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。任何涉及"操作/查看手机App"的请求都应先加载本Skill再执行。
+description: 操作手机App的唯一标准方案。当用户要求打开某App、点击界面、查物流/课表/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须使用本Skill。核心铁律：① 严禁让子代理自己猜坐标去点，坐标必须由主Agent先"截图+OCR+画框校验"得出；② 命中场景数据库才可直接点，未命中必须先截图定位再补录。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。
 tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, pinduoduo, preferred]
 ---
 
 # 虚拟屏 UI 自动化操作 Skill
 
+## 🚫 三条铁律（违反即失败，必须遵守）
+
+> **铁律 1 · 坐标只能"量"不能"猜"**
+> **严禁**让 UI 子代理自己估算 / 猜坐标去点击。
+> 任何一次点击前，坐标**必须**由主 Agent 通过「**截图 → OCR → 画框校验**」得出（或来自场景数据库）。
+> 直接把点击目标交给子代理"看着点"是**明令禁止**的——它估的坐标会严重偏差（实测偏 100~200px）。
+
+> **铁律 2 · 未命中数据库 ≠ 可以乱点**
+> 场景数据库没有记录时，**必须**走「步骤 3 截图+OCR+画框定位」流程，
+> **不允许**跳过定位、直接让子代理自己找位置/自己点。
+> 定位成功后再补录进数据库。
+
+> **铁律 3 · 子代理只当"手"，不当"眼"也不会"想"**
+> 子代理每次**只执行一个明确动作**（点 [x,y] / 滑动一次 / 读屏报告），
+> 坐标由主 Agent 决定。**禁止**给它下"帮我找到xx并点击"这类需要它自己判断位置的任务。
+
+> 💡 一句话：**定位由主 Agent 负责（截图+OCR+画框），子代理只负责"按给定坐标动手"。**
+
+---
+
 > ⚠️ **执行优先级声明**：涉及"操作手机 App / 查看 App 内容 / 点击界面"的任务，
 > **优先使用本 Skill 的标准流程**，而非直接调用 `Automatic_ui_base` 或 `Automatic_ui_subagent` 裸操作。
+
+## 📦 环境依赖：通知辅助组件（`com.operit.assist`）
+
+本 Skill 的**通知能力依赖一个可选的辅助组件 App**（Operit辅助组件）：
+
+| 状态 | 通知行为 |
+|---|---|
+| **已安装** `com.operit.assist` | 用 `am broadcast` 经它发通知 → **横幅弹出 + 自定义图标 + 震动** |
+| **未安装** | 降级 `cmd notification post`（shell 通知）→ **静默，只进通知栏** |
+
+- **发通知前必须先检查**：`pm list packages | grep com.operit.assist`
+- **未安装时**：正常执行（降级），但**必须告知用户**去仓库 Release 安装以获得完整能力：
+  `https://github.com/Leumc/Skills-Plugins/releases`（tag `Android-App`，文件 `Operit_Assist.apk`）
+- 详细调用方式见 **步骤 5.5**。
 > 本 Skill 封装了更可靠的做法：场景缓存查坐标 → 截图+OCR+画框精准定位 → 单次操作主Agent控场 → 查询类弹Toast → 敏感环节用户接管。
 > 直接用子代理裸操作会：坐标点歪、乱跳、卡死、重复找位置；本 Skill 已解决这些坑。
 
@@ -83,9 +117,15 @@ python3 scene_db.py query-screen --pkg com.sankuai.meituan --act "全部订单�
    # 再用 PIL 裁剪目标区域 OCR 确认
    ```
 
-### 步骤 4：让子代理点击
-- 单次点击："本任务只做一次点击：do(action=\"Tap\", element=[x,y])。点击后等待N秒，报告页面。不要重复点击，不要返回。"
-- 点击后**再次截图确认**结果。
+### 步骤 4：让子代理点击（坐标必须已由主 Agent 定好）
+**前提（硬性）**：手头已有**通过截图+OCR+画框校验得出的比例坐标**（或来自数据库命中）。
+**没有坐标就不要进入这一步** —— 先回去做步骤 3。
+
+- ✅ 正确：给子代理一个**写死的坐标**，只让它点。
+  > "本任务只做一次点击：do(action=\"Tap\", element=[x,y])。点击后等待 N 秒，报告页面。不要重复点击，不要返回。"
+- ❌ **禁止**："帮我点一下『再来一单』" / "找到『个人中心』并点击" / "点那个按钮"
+  —— 这类让它自己找位置的说法，**一律不许**。
+- 点击后**再次截图确认**结果（结果不对 → 回步骤 3 重新定位 + `fail` 记录）。
 
 ### 步骤 5：记录场景（成功后立即做）
 格式必须完整（见第六节）。
@@ -111,22 +151,61 @@ python3 scene_db.py query-screen --pkg com.sankuai.meituan --act "全部订单�
 - `wait_ms`：`8000`
 - 返回 `{"ok":true,"r":"OK"}` = 成功。
 
-**【动作2：发系统通知】** 调用 **`super_admin:shell`**：
+**【动作2：发系统通知】**
+
+> **判断顺序（务必按此走）**：先看辅助 App 是否安装 → 装了用辅助 App（可横幅+图标+震动）；没装则降级为 shell 静默通知，**并在对话里明确告知用户去仓库 Release 安装**。
+
+**① 先检查辅助 App 是否安装**（`super_admin:shell`）：
+```bash
+pm list packages | grep com.operit.assist
+```
+- **输出含 `package:com.operit.assist`** → 已安装，走 **②A**（推荐，体验最好）
+- **无输出** → 未安装，走 **②B**（降级），并**必须告知用户去安装**（见下文）
+
+**【②A · 已安装辅助 App】用广播发通知**（调用 `super_admin:shell`）：
+```bash
+am broadcast -a com.operit.notify.SHOW \
+  -n com.operit.assist/com.operit.assist.notify.NotifyReceiver \
+  --es title "Operit · 查询结果" \
+  --es text "<结果>" \
+  --ez vibrate true \
+  --ez sound false \
+  --ei id 1001
+```
+- 返回 **`Broadcast completed: result=-1, data="ok"`** = 成功（`result=-1` 即 `RESULT_OK`；失败时 `data` 为原因）。
+- 效果：**横幅弹出 + 自定义图标 + 震动（无声音）**。
+- ⚠️ 必须用**显式广播 `-n`**，不要用隐式 action。
+
+**【②B · 未安装辅助 App】降级为 shell 静默通知**：
 ```bash
 cmd notification post -t "Operit · 查询结果" -S bigtext "query" "<结果>"
 ```
-- `-t`：标题；`-S bigtext`：长文本样式；最后一个参数是正文。
-- **纯文字，不加图标**（本设备 vivo ROM 不允许自定义通知图标，加了也是默认图标，故不加）。
-- 静默（**无声音、无横幅**），只进通知栏。
+- 效果：**纯文字、静默**，只进通知栏（无横幅/无自定义图标/无震动）。
+- **纯文字，不加图标**（shell 通知的图标会被 ROM 强制替换为默认图标，加了也白加）。
 - 返回含 `Notification(...)` 即成功。
 
-**实操示例**（查物流场景，两个都发）：
+> 📢 **未安装时必须在对话中告知用户**（原话参考）：
+> 「本次用的是系统 shell 静默通知（只能在通知栏查看，无横幅/震动）。
+> 想要**横幅弹出 + 自定义图标 + 震动**，请到仓库 Release 安装辅助组件：
+> https://github.com/Leumc/Skills-Plugins/releases （tag `Android-App`，文件 `Operit_Assist.apk`）
+> 安装后本 Skill 会自动切换到辅助组件发送通知。」
+
+**实操示例**（查物流场景，两个动作都发）：
+
+已安装辅助组件时：
 ```
 # 1) Toast
 debug_run_sandbox_script(source_code: "const r = await toolCall('toast', { message: '查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通' }); return { ok:true, r };", wait_ms: 8000)
 
-# 2) 系统通知
+# 2) 系统通知（辅助组件）
+super_admin:shell(command: "am broadcast -a com.operit.notify.SHOW -n com.operit.assist/com.operit.assist.notify.NotifyReceiver --es title \"Operit · 查询结果\" --es text \"查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通\" --ez vibrate true --ez sound false --ei id 1001")
+```
+
+未安装辅助组件时：
+```
+# 2) 系统通知（降级为 shell 静默通知）
 super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" -S bigtext \"query\" \"查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通\"")
+# 然后口头告知用户去 Release 安装
 ```
 
 #### ④ 内容怎么写（一句话结论 + 关键信息）
@@ -141,21 +220,45 @@ super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" 
 - 若本次查询还顺带补录了场景/坐标 → 照常在数据库里更新。
 
 ### 步骤 6：敏感环节 → 通知用户接管
-- 遇到 输密码/指纹/确认支付 等，**AI 停手**，发系统通知：
-  ```bash
-  cmd notification post -t "Operit助手" "task" "美团订单待支付 ¥14.1，请在虚拟屏接管支付"
-  ```
+- 遇到 输密码/指纹/确认支付 等，**AI 停手**，发通知告知用户接管：
+  - **已装辅助 App**（`pm list packages | grep com.operit.assist` 有输出）→ 用广播（可横幅，用户更容易及时看到）：
+    ```bash
+    am broadcast -a com.operit.notify.SHOW -n com.operit.assist/com.operit.assist.notify.NotifyReceiver --es title "Operit助手" --es text "美团订单待支付 ¥14.1，请在虚拟屏接管支付" --ez vibrate true --ez sound false
+    ```
+  - **未装辅助 App** → 降级 shell 通知，并告知用户去 Release 安装（同步骤 5.5）：
+    ```bash
+    cmd notification post -t "Operit助手" "task" "美团订单待支付 ¥14.1，请在虚拟屏接管支付"
+    ```
 - 用户在 **Operit 虚拟屏预览窗口**里直接操作（**不切主屏**，不中断会话）。
 
 ## 五、关键约束（踩过的坑）
 1. **单次操作原则**：一次调用只做一个动作，由主Agent串接控场；不要给子代理下多步长任务（会乱跳/卡死/提前退出）。
-2. **子代理坐标不可靠**：估的坐标可能偏很多（实测「再来一单」子代理估 [835,493]，实际 [886,255]）。首次必须 OCR 校验。
+2. **子代理坐标不可靠（核心）**：估的坐标可能偏很多（实测「再来一单」子代理估 [835,493]，实际 [886,255]，**偏差约 250px**）。
+   **所以坐标必须由主 Agent"截图+OCR+画框"量出，绝不能交给子代理自己估。**
 3. **禁止用 Note/Call_API 代替动作**：intent 里写明"必须真的执行 Swipe/Tap"。
 4. **滑动惯性大**：滑一次→停下读屏→再决定；滑两次内容不变 = 到底。
 5. **虚拟屏勿多开**：同一 App 只能在一个虚拟屏；用完 `close_all_virtual_displays`。
 6. **截图黑屏**：页面跳转/弹窗瞬间可能截到黑屏（文件很小如 19KB），重新截图即可，不是防截屏。
 7. **App 混淆**：普通微信用 `com.tencent.mm`，企业微信用 `com.tencent.wework`；用底部导航条区分。
 8. **控件拿不到**：微信/企业微信屏蔽无障碍，`uiautomator dump` 为空；只能靠截图视觉识别。
+9. **通知必须走辅助 App 优先**（见步骤 5.5）：先 `pm list packages | grep com.operit.assist` 判断，
+   装了就用 `am broadcast -n com.operit.assist/com.operit.assist.notify.NotifyReceiver`（可横幅/图标/震动）；
+   没装才降级 `cmd notification post`，**并且必须告知用户去 Release 安装**。
+   ⚠️ **禁止**不检查就直接用 shell 通知——那样会白白丢掉横幅和震动。
+
+### ⛔ 最容易犯的错（务必自检）
+
+| 错误写法（✅禁止） | 正确写法 |
+|---|---|
+| 让子代理"找到『个人课表』并点击" | 主 Agent 截图→OCR 得 `[255,779]` → 子代理 `Tap [255,779]` |
+| 让子代理"点右上角的『再来一单』" | 主 Agent 量出 `[886,255]` → 子代理 `Tap [886,255]` |
+| 数据库 MISS 后直接让子代理去点 | 回步骤 3 截图定位 → 得坐标 → 再点 → 补录数据库 |
+| 一次 intent 让子代理"做完整流程" | 一次只给一个动作，主 Agent 逐步串接 |
+| 直接 `cmd notification post` 发通知 | **先查辅助 App**：装了→广播；没装→降级+告知用户装 |
+
+> 🔁 **每次调用子代理前自检**：我给的坐标，**是量出来的吗**？不是 → 先去量。
+>
+> 🔁 **每次发通知前自检**：我查过 `com.operit.assist` 装没装吗？没查 → 先查。
 
 ## 六、场景记录格式（必须完整）
 ```
@@ -173,7 +276,10 @@ Activity：<页面/活动名>
 ## 七、期望输出
 - 每步操作后报告：做了什么、当前页面状态、是否成功。
 - 找到新控件位置 → 更新场景缓存。
-- **查询类操作 → 同时 ① 弹 Toast（`toolCall('toast',...)`）+ ② 发系统通知（`cmd notification post ... -S bigtext`）**（见步骤 5.5）。
+- **查询类操作 → 同时 ① 弹 Toast（`toolCall('toast',...)`）+ ② 发通知**（见步骤 5.5）。
+  - 通知**优先走辅助 App**（`com.operit.assist` 广播，可横幅/图标/震动）；
+  - **未装辅助 App 则降级为 shell 静默通知，并必须告知用户去 Release 安装辅助组件**：
+    https://github.com/Leumc/Skills-Plugins/releases （tag `Android-App` / `Operit_Assist.apk`）。
 - 敏感环节 → 明确通知用户接管。
 
 ## 八、场景数据库（scenes.db，V3 三表混合结构）
