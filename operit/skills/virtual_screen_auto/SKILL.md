@@ -1,7 +1,7 @@
 ---
 name: virtual_screen_auto
-description: 操作手机App的唯一标准方案。当用户要求打开某App、点击界面、查物流/课表/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须使用本Skill。核心铁律：① 严禁让子代理自己猜坐标去点，坐标必须由主Agent先"截图+OCR+画框校验"得出；② 命中场景数据库才可直接点，未命中必须先截图定位再补录；③ 场景数据库可随时查（query-screen按界面查元素 / query-action按操作查链路），每进入新界面都应先查库、命中即用坐标省掉截图；④ 异常先怀疑环境（跨App页面跑到主屏用move-stack搬回、键盘在主屏用input keyevent 66提交、滑动无效是起点落在浮层）。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。
-tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, pinduoduo, preferred]
+description: 操作手机App的唯一标准方案（通用，不绑定特定App）。当用户要求打开某App、点击界面、查信息/订单、下单购物、发消息、自动化操作手机等任何界面任务时，必须使用本Skill。核心铁律：① 严禁让子代理自己猜坐标去点，坐标必须由主Agent先"截图+OCR+画框校验"得出；② 命中场景数据库才可直接点，未命中必须先截图定位再补录；③ 场景数据库可随时查（query-screen按界面查元素 / query-action按操作查链路），每进入新界面都应先查库、命中即用坐标省掉截图；④ 异常先怀疑环境（跨App页面跑到主屏用move-stack搬回、键盘在主屏用input keyevent 66提交、滑动无效是起点落在浮层）。它提供：虚拟屏操作(不占用用户屏幕)、场景坐标数据库(使用者自建)、单次操作主Agent控场、查询类结果弹Toast、支付等敏感环节通知用户接管。
+tags: [android, ui-automation, virtual-display, app-operation, preferred]
 ---
 
 # 虚拟屏 UI 自动化操作 Skill
@@ -62,19 +62,27 @@ tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, 
 核心价值：**点得准**（截图+OCR+画框校验）、**不重复找**（场景缓存）、**安全接管**（支付环节通知用户）。
 
 ## 一、适用场景
-- 需要 AI 帮助操作 App（微信/美团/企业应用等），且不想占用用户真实屏幕。
+
+> 🌍 **本 Skill 是通用工具，不绑定任何特定 App / 学校 / 个人场景。**
+> - 适用于**任意**手机 App 的界面自动化操作。
+> - 场景数据库（`scenes.db`）**由使用者自己在使用过程中积累**，本 Skill 不附带任何预置数据。
+> - 文档中的"某界面""某按钮"均为**占位示例**，实际以你自己的 App 界面为准。
+> - 首次使用某 App 时数据库是空的，按标准流程走「查库 → 未命中 → 截图定位 → 补录」即可，**越用越快**。
+
+- 需要 AI 帮助操作手机 App（如社交 / 购物 / 工具类应用等），且不想占用用户真实屏幕。
 - 需要点击界面元素，但普通坐标估算容易点歪（密集列表）。
 - 涉及下单/支付等敏感流程，需要用户在关键步骤接管。
 
 ## 二、前置条件
 - 已授予 Shizuku 权限。
 - 已启用「实验性虚拟显示」，且「UI 控制器」功能模型支持**图片理解（多模态/视觉）**。
-- 环境：iQOO Z10（示例）；主屏 1260x2800，**虚拟屏 1264x2704**（两者不同！）。
-- 工具：`Automatic_ui_subagent` 包、`super_admin` 包；tesseract（已装，chi_sim）；脚本 `/data/local/tmp/draw_by_ratio.py`。
+- 环境：支持虚拟屏的 Android 设备（**主屏与虚拟屏分辨率可能不同**，务必先实测确认，见第三节）。
+- 工具：`Automatic_ui_subagent` 包、`super_admin` 包；tesseract（需含 `chi_sim` 中文包）；脚本 `/data/local/tmp/draw_by_ratio.py`。
 
 ## 三、坐标体系（关键）
 - 子代理用 **999×999 归一化坐标**（0~1000 = 0~100%），**禁止传真实像素**。
-- 比例换算：`x_ratio = round(x_px / 1264 * 1000)`，`y_ratio = round(y_px / 2704 * 1000)`。
+- 比例换算：`x_ratio = round(x_px / 屏宽 * 1000)`，`y_ratio = round(y_px / 屏高 * 1000)`
+  （**屏宽/屏高 = 虚拟屏实际分辨率，先实测确认**，不是主屏的）。
 - 滑动（子代理内部坐标）：向下 `swipe(start=[500,800], end=[500,300])`；向上 `swipe([500,300]→[500,700])`。
 
 ## 四、标准工作流（V2：先查场景，后记录）
@@ -98,10 +106,10 @@ tags: [android, ui-automation, virtual-display, app-operation, wechat, meituan, 
 cd /sdcard/Download/Operit/skills/virtual_screen_auto/scripts
 
 # 【查法1】按“操作”查 → 返回完整步骤链（知道要做什么时用）
-python3 scene_db.py query-action --name "再来一单"
+python3 scene_db.py query-action --name "<操作名>"
 
 # 【查法2】按“界面”查 → 列出该界面所有已缓存元素+坐标（知道在哪个页面时用）
-python3 scene_db.py query-screen --pkg com.sankuai.meituan --act "全部订单页"
+python3 scene_db.py query-screen --pkg <包名> --act "<界面名>"
 
 # 【辅助】列出全部已缓存内容（不确定有什么、想摸底时用）
 python3 scene_db.py list
@@ -111,7 +119,7 @@ python3 scene_db.py list
 
 | 情形 | 该查什么 | 命令 |
 |---|---|---|
-| **知道要做的操作名**（如"再来一单"） | 查操作链路 | `query-action --name "<操作名>"` |
+| **知道要做的操作名**（如"xxx"） | 查操作链路 | `query-action --name "<操作名>"` |
 | **知道当前在哪个界面**（如"全部订单页"） | 查界面元素 | `query-screen --pkg <包名> --act "<界面名>"` |
 | **两者都不确定** | 先摸底 | `list` → 看清有什么，再决定 |
 | **进入一个新界面后**（每步操作之后） | **必查界面元素** | `query-screen --pkg <包名> --act "<当前界面>"` ← **最容易漏，务必做** |
@@ -157,7 +165,7 @@ python3 scene_db.py list
    VD=$(dumpsys SurfaceFlinger --display-id | grep 'Virtual display' | grep -oE '[0-9]{15,}')
    screencap -p -d "$VD" /sdcard/Download/scr.png
    ```
-   截图尺寸 = 虚拟屏 1264x2704，干净无悬浮窗。
+   截图尺寸 = 虚拟屏实际分辨率（**先实测**，如 `identify`/PIL 读取），干净无悬浮窗。
 2. OCR 定位目标文字像素：
    ```bash
    tesseract scr.png stdout -l chi_sim tsv | awk -F'\t' '$12!=""{print $7,$8,$9,$10,$12}'
@@ -176,7 +184,7 @@ python3 scene_db.py list
 
 - ✅ 正确：给子代理一个**写死的坐标**，只让它点。
   > "本任务只做一次点击：do(action=\"Tap\", element=[x,y])。点击后等待 N 秒，报告页面。不要重复点击，不要返回。"
-- ❌ **禁止**："帮我点一下『再来一单』" / "找到『个人中心』并点击" / "点那个按钮"
+- ❌ **禁止**："帮我点一下『某按钮』" / "找到『某入口』并点击" / "点那个按钮"
   —— 这类让它自己找位置的说法，**一律不许**。
 - 点击后**再次截图确认**结果（结果不对 → 回步骤 3 重新定位 + `fail` 记录）。
 
@@ -246,25 +254,11 @@ cmd notification post -t "Operit · 查询结果" -S bigtext "query" "<结果>"
 **实操示例**（查物流场景，两个动作都发）：
 
 已安装辅助组件时：
-```
-# 1) Toast
-debug_run_sandbox_script(source_code: "const r = await toolCall('toast', { message: '查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通' }); return { ok:true, r };", wait_ms: 8000)
-
-# 2) 系统通知（辅助组件）
-super_admin:shell(command: "am broadcast -a com.operit.notify.SHOW -n com.operit.assist/com.operit.assist.notify.NotifyReceiver --es title \"Operit · 查询结果\" --es text \"查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通\" --ez vibrate true --ez sound false --ei id 1001")
-```
-
-未安装辅助组件时：
-```
-# 2) 系统通知（降级为 shell 静默通知）
-super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" -S bigtext \"query\" \"查询结果｜Switch Lite手柄壳(蓝)：派件中，预计今天送达·圆通\"")
-# 然后口头告知用户去 Release 安装
-```
 
 #### ④ 内容怎么写（一句话结论 + 关键信息）
 - 一行、**≤30~40 字**，不要换行、不要贴大段文字。
 - 结构：`查询结果｜<对象>：<状态/结论>（<关键补充>）`
-- 例：`查询结果｜手柄壳：派件中，预计今天送达（圆通）`
+- 例：`查询结果｜<商品/对象>：<状态>，<补充>（<渠道>）`
 - 反例（太长/没结论）：`我帮你查了一下，订单号xxxx…商品是…状态显示…`
 - **Toast 与通知正文用同一句话**（保持一致）。
 
@@ -276,24 +270,24 @@ super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" 
 - 遇到 输密码/指纹/确认支付 等，**AI 停手**，发通知告知用户接管：
   - **已装辅助 App**（`pm list packages | grep com.operit.assist` 有输出）→ 用广播（可横幅，用户更容易及时看到）：
     ```bash
-    am broadcast -a com.operit.notify.SHOW -n com.operit.assist/com.operit.assist.notify.NotifyReceiver --es title "Operit助手" --es text "美团订单待支付 ¥14.1，请在虚拟屏接管支付" --ez vibrate true --ez sound false
+    am broadcast -a com.operit.notify.SHOW -n com.operit.assist/com.operit.assist.notify.NotifyReceiver --es title "Operit助手" --es text "<订单/操作摘要>，请在虚拟屏接管" --ez vibrate true --ez sound false
     ```
   - **未装辅助 App** → 降级 shell 通知，并告知用户去 Release 安装（同步骤 5.5）：
     ```bash
-    cmd notification post -t "Operit助手" "task" "美团订单待支付 ¥14.1，请在虚拟屏接管支付"
+    cmd notification post -t "Operit助手" "task" "<订单/操作摘要>，请在虚拟屏接管"
     ```
 - 用户在 **Operit 虚拟屏预览窗口**里直接操作（**不切主屏**，不中断会话）。
 
 ## 五、关键约束（踩过的坑）
 1. **单次操作原则**：一次调用只做一个动作，由主Agent串接控场；不要给子代理下多步长任务（会乱跳/卡死/提前退出）。
-2. **子代理坐标不可靠（核心）**：估的坐标可能偏很多（实测「再来一单」子代理估 [835,493]，实际 [886,255]，**偏差约 250px**）。
+2. **子代理坐标不可靠（核心）**：估的坐标可能偏差很大（实测某次子代理估 `[835,493]`，实际 `[886,255]`，**偏差约 250px**）。
    **所以坐标必须由主 Agent"截图+OCR+画框"量出，绝不能交给子代理自己估。**
 3. **禁止用 Note/Call_API 代替动作**：intent 里写明"必须真的执行 Swipe/Tap"。
 4. **滑动惯性大**：滑一次→停下读屏→再决定；滑两次内容不变 = 到底。
 5. **虚拟屏勿多开**：同一 App 只能在一个虚拟屏；用完 `close_all_virtual_displays`。
 6. **截图黑屏**：页面跳转/弹窗瞬间可能截到黑屏（文件很小如 19KB），重新截图即可，不是防截屏。
-7. **App 混淆**：普通微信用 `com.tencent.mm`，企业微信用 `com.tencent.wework`；用底部导航条区分。
-8. **控件拿不到**：微信/企业微信屏蔽无障碍，`uiautomator dump` 为空；只能靠截图视觉识别。
+7. **App 同名混淆**：同一厂商可能有多个包名相近的 App（如普通版/企业版），启动时务必用**准确包名**定位。
+8. **控件拿不到**：部分 App 屏蔽无障碍，`uiautomator dump` 为空；此时只能靠截图视觉识别。
 9. **通知必须走辅助 App 优先**（见步骤 5.5）：先 `pm list packages | grep com.operit.assist` 判断，
    装了就用 `am broadcast -n com.operit.assist/com.operit.assist.notify.NotifyReceiver`（可横幅/图标/震动）；
    没装才降级 `cmd notification post`，**并且必须告知用户去 Release 安装**。
@@ -303,8 +297,8 @@ super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" 
 
 | 错误写法（✅禁止） | 正确写法 |
 |---|---|
-| 让子代理"找到『个人课表』并点击" | 主 Agent 截图→OCR 得 `[255,779]` → 子代理 `Tap [255,779]` |
-| 让子代理"点右上角的『再来一单』" | 主 Agent 量出 `[886,255]` → 子代理 `Tap [886,255]` |
+| 让子代理"找到『某按钮』并点击" | 主 Agent 截图→OCR 得 `[x,y]` → 子代理 `Tap [x,y]` |
+| 让子代理"点右上角的『某入口』" | 主 Agent 量出 `[x,y]` → 子代理 `Tap [x,y]` |
 | 数据库 MISS 后直接让子代理去点 | 回步骤 3 截图定位 → 得坐标 → 再点 → 补录数据库 |
 | 一次 intent 让子代理"做完整流程" | 一次只给一个动作，主 Agent 逐步串接 |
 | 直接 `cmd notification post` 发通知 | **先查辅助 App**：装了→广播；没装→降级+告知用户装 |
@@ -332,14 +326,14 @@ super_admin:shell(command: "cmd notification post -t \"Operit · 查询结果\" 
 
 ### 11. 跨 App 跳转后"页面不见" → 可能被启动到主屏
 
-**现象**：在虚拟屏点"分享到微信"等跨 App 入口后，目标页（如微信选择联系人页）被启动到
+**现象**：在虚拟屏点"分享/跳转"等跨 App 入口后，目标页被启动到
 **主屏 display 0**，虚拟屏看不到 → 子代理会误报"没跳转 / 点击无效"。
 
 **排查**：
 ```bash
 dumpsys activity activities | grep -iE '<目标Activity关键字>'
-# 例：ActivityRecord{... com.tencent.mm/.ui.transmit.SelectConversationUI t9948 d0}
-#                                                    t9948=task id   d0=在主屏
+# 例：ActivityRecord{... <包名>/<Activity> t9948 d0}
+#                                          t9948=task id   d0=在主屏
 ```
 
 **搬回虚拟屏**（唯一可用的命令）：
@@ -391,7 +385,7 @@ cmd activity display move-stack <TASK_ID> <虚拟屏display号>
 
 ### 15. 子代理坐标偏差的根因 & 画框只能程序合成
 
-- **偏差根因**：子代理内部按 **9:16** 估屏幕（约 1080×1930），而虚拟屏实际是 **1264×2704（≈9:19.3）**，
+- **偏差根因**：子代理内部按 **9:16** 估算屏幕（约 1080×1930），而虚拟屏实际通常是**更长的比例**（如 9:19.3），
   宽高比不同 → 纵向**系统性偏移**，越靠下偏得越多（实测偏 100~250px）。
   → 所以**必须**用「截图 → OCR → 画框 → 换算 999 比例」得出的坐标，**绝不能用像素坐标或估算坐标**。
 - **子代理没有"画框"动作**：其动作集为 Tap/Swipe/Note/Call_API/Launch/Back/Home/Wait，
@@ -413,7 +407,7 @@ Activity：<页面/活动名>
 类型：<查询类 / 操作类>   ← 查询类完成后需弹 Toast
 控件：<点击目标名称> → 比例坐标 [x, y]
 上下文：<页面特征/前置条件>
-分辨率：虚拟屏 1264x2704
+分辨率：虚拟屏 <实际分辨率，实测填写>
 验证日期：<YYYY-MM-DD>
 ```
 
@@ -456,15 +450,15 @@ python3 scene_db.py init
 ### 常用命令
 ```bash
 # 1) 新增界面
-python3 scene_db.py add-screen --app 拼多多 --pkg com.xunmeng.pinduoduo --act "首页" --desc "底部导航5项"
+python3 scene_db.py add-screen --app <应用名> --pkg <包名> --act "<界面名>" --desc "<备注>"
 # 2) 新增元素（界面上的可点元素 + 比例坐标）
-python3 scene_db.py add-element --pkg com.xunmeng.pinduoduo --act "首页" --label "个人中心" --xy "901,983"
+python3 scene_db.py add-element --pkg <包名> --act "<界面名>" --label "<元素名>" --xy "<x>,<y>"
 # 3) 新增操作（步骤引用 界面|元素，多个用 ; 分隔）
-python3 scene_db.py add-action --name "拼多多查物流" \
-    --steps "com.xunmeng.pinduoduo|首页|个人中心; com.xunmeng.pinduoduo|个人中心页|待收货"
+python3 scene_db.py add-action --name "<操作名>" \
+    --steps "<包名>|<界面1>|<元素1>; <包名>|<界面2>|<元素2>"
 # 4) 查询
-python3 scene_db.py query-action --name "再来一单"      # 按操作→返回完整步骤链
-python3 scene_db.py query-screen --pkg com.xunmeng.pinduoduo --act "首页"   # 按界面→列出元素
+python3 scene_db.py query-action --name "<操作名>"      # 按操作→返回完整步骤链
+python3 scene_db.py query-screen --pkg <包名> --act "<界面名>"   # 按界面→列出元素
 # 5) 失败记录 / 列表 / 导出
 python3 scene_db.py fail --id 3
 python3 scene_db.py list
@@ -482,15 +476,11 @@ python3 scene_db.py export --out scenes_v3_backup.json
 > 找到并校验成功后，再补录（`add-screen → add-element → add-action`）。
 > 数据库是"越用越全"的缓存，**空白只是尚未探索，不是不可行**。
 
-### 已缓存数据（9 界面 / 11 元素 / 9 操作）
-| 操作 | 步骤 |
-|---|---|
-| 美团-进入全部订单 | 首页：我的[890,986] → 全部订单[79,588] |
-| 美团-最近订单再来一单 | 订单页：订单卡片[317,444] → 再来一单[886,255] |
-| 美团-规格弹窗马上抢 | 规格弹窗：马上抢[514,954] |
-| 美团-提交订单立即支付 | 提交页：立即支付[791,969] |
-| 美团-收银台待接管 | 收银台：确认交易[500,500]（用户接管） |
-| 微信-进北语企业应用 | 通讯录页：北京语言大学[400,687] |
-| 微信-北语查课表 | 企业应用页：个人课表[255,779] |
-| 拼多多-进个人中心 | 首页：个人中心[901,983] |
-| 拼多多-看待收货物流 | 个人中心页：待收货[700,285] |
+### 已缓存内容不进 Skill
+
+> ⚠️ **安全约定**：场景数据库里的**具体界面/元素/坐标属于本机私有数据**，
+> **不得写进 SKILL.md，也不得提交到公开仓库**。
+>
+> - 数据库本文件已被 `.gitignore` 排除（`*.db`）。
+> - 查"我缓存了什么" → 直接跑 `python3 scene_db.py list`（本地实时查询），**不要**在文档里罗列。
+> - 发布/分享 Skill 时，只带**方法与规则**，不带任何实测坐标。

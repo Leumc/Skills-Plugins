@@ -87,7 +87,7 @@ am broadcast \
   -a com.operit.notify.SHOW \
   -n com.operit.assist/com.operit.assist.notify.NotifyReceiver \
   --es title "Operit · 查询结果" \
-  --es text "手柄壳：派件中，预计今天送达（圆通）" \
+  --es text "<通知正文>" \
   --ez vibrate true \
   --ez sound false \
   --ei id 1001
