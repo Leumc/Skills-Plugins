@@ -1,0 +1,24 @@
+<resources>
+    <string name="app_name">Operit辅助组件</string>
+
+    <string name="subtitle">Operit Assistant Components</string>
+    <string name="status_title">● 通知投递模块</string>
+    <string name="status_ok">权限已授予 · 通知可用</string>
+    <string name="status_no_perm">未授予通知权限</string>
+    <string name="status_channel_ok">渠道已就绪 (IMPORTANCE_HIGH)</string>
+    <string name="grant_button">授予通知权限</string>
+    <string name="test_button">发送测试通知</string>
+    <string name="open_settings_button">打开系统通知设置</string>
+    <string name="guide_title">使用说明</string>
+    <string name="guide_body">1. 点击上方按钮授予「通知」权限（Android 13+ 必需）。\n2. 在系统设置中允许本应用的「横幅通知」「锁屏通知」与「震动」。\n3. 电池设置 → 允许后台运行 / 允许自启动，且不要「强行停止」本应用。\n4. 保持本应用安装，由 Operit 通过广播触发通知。</string>
+    <string name="cmd_title">调用命令</string>
+    <string name="cmd_body">am broadcast -a com.operit.notify.SHOW \\\n  -n com.operit.assist/com.operit.assist.notify.NotifyReceiver \\\n  --es title "标题" --es text "正文" \\\n  --ez vibrate true --ez sound false --ei id 1001</string>
+    <string name="copy_button">复制命令</string>
+    <string name="copied">已复制到剪贴板</string>
+    <string name="channel_name">Operit 通知</string>
+    <string name="channel_desc">由 Operit 触发的高优先级通知（含横幅与震动）</string>
+    <string name="test_title">Operit · 测试通知</string>
+    <string name="test_text">广播链路正常。若看到横幅且伴随震动，说明配置成功。</string>
+    <string name="result_ok">通知已发送 (RESULT_OK)</string>
+    <string name="result_fail">发送失败：</string>
+</resources>

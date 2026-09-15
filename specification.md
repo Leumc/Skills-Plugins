@@ -18,6 +18,11 @@
 │   │       └── data/              # 本地数据目录（.gitignore 已排除，不提交）
 │   ├── descriptions/              # Skill 描述文件（外置，不属于 Skill 本体）
 │   │   └── <skill_name>.md
+│   ├── assist_app/                # Operit 专用辅助组件 App 源码（原生 Android 能力补充）
+│   │   ├── README.md              # 必须：该 App 的详细说明
+│   │   ├── app/                   # Android 模块（源码 / 资源 / Manifest）
+│   │   ├── gradle/                # Gradle Wrapper 与依赖版本目录
+│   │   └── setup_android_env.sh   # ARM64 环境初始化脚本
 │   └── plugins/
 │       └── <plugin_name>/
 │
@@ -39,6 +44,7 @@
 | 目录 | 归属平台 | 说明 |
 |---|---|---|
 | `operit/` | Operit | 虚拟屏自动化等 Skill |
+| `operit/assist_app/` | Operit | Operit 专用辅助组件 App 源码（原生 Android 能力补充，如通知投递） |
 | `codex/` | Codex | Codex 平台内容 |
 | `deepseek_harness/` | DeepSeek Harness | Harness 平台内容 |
 | `hermes/` | Hermes | Hermes 平台内容 |

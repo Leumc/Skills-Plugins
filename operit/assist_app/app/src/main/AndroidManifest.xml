@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Android 13+ 必须声明并由用户在运行时授予，否则通知不显示 -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <!-- 震动 -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+    <!-- 自启动/保活（部分 ROM 需用户在系统设置中额外加白名单） -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:roundIcon="@mipmap/ic_launcher_round"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.NotifyAssist"
+        tools:targetApi="34">
+
+        <!-- 授权引导页 -->
+        <activity
+            android:name=".MainActivity"
+            android:exported="true"
+            android:label="@string/app_name"
+            android:theme="@style/Theme.NotifyAssist">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
+        <!--
+            ★ 通知投递模块：外部（Operit / shell，uid 2000）通过显式广播 -n 直达。
+            - exported 必须为 true
+            - 故意不加 <intent-filter>（坚持显式广播，规避 Android 8+ 隐式广播后台限制）
+        -->
+        <receiver
+            android:name=".notify.NotifyReceiver"
+            android:enabled="true"
+            android:exported="true"
+            android:directBootAware="true" />
+
+        <!-- 开机自启：仅用于重建通知渠道，安装后无需打开也能收到广播 -->
+        <receiver
+            android:name=".BootReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+                <action android:name="android.intent.action.LOCKED_BOOT_COMPLETED" />
+            </intent-filter>
+        </receiver>
+
+    </application>
+
+</manifest>
